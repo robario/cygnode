@@ -8,5 +8,10 @@ set -o nounset
 
 source "$(dirname "$0")/variables.sh"
 
-rm "$execPath" "$confPath"
-mv "$nodePath" "$execPath"
+rm "$confPath"
+if test -e "$nodePath"
+then
+    mv --force "$nodePath" "$execPath"
+else
+    rm "$nodejsPath"/node-v*.exe
+fi
