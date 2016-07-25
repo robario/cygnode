@@ -15,5 +15,14 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robario/cygnode.git"
-  }
+  },
+  "scripts": {
+    "build": "make node && strip node.exe",
+    "postinstall": "sh ./scripts/install.sh",
+    "postuninstall": "sh ./scripts/uninstall.sh"
+  },
+  "os": [
+    "win32"
+  ],
+  "preferGlobal": true
 }

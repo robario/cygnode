@@ -1,0 +1,5 @@
+cygnodePath="$(cygpath --mixed -- "$(pwd)")"
+nodejsPath="$(cygpath --mixed -- "$(dirname "$(which node)")")"
+nodePath="$nodejsPath/nodeImpl.exe"
+execPath="$nodejsPath/node.exe"
+confPath="$execPath.conf"
