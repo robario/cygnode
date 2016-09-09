@@ -1,5 +1,6 @@
 cygnodePath="$(cygpath --mixed -- "$(pwd)")"
 nodejsPath="$(cygpath --mixed -- "$(dirname "$(which node)")")"
-nodePath="$nodejsPath/nodeImpl.exe"
+nodeVersion="$("$nodejsPath/node.exe" --version | tr --delete '[:space:]')"
+nodePath="$nodejsPath/node-$nodeVersion.exe"
 execPath="$nodejsPath/node.exe"
 confPath="$execPath.conf"
