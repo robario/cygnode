@@ -11,6 +11,8 @@ if (!isCygwin) {
     throw new Error('Cygwin Only');
 }
 
+process.env.PWD = process.cwd(); // Only for Cordova but also Node can understand.
+
 const patches = {};
 const base = path.resolve(__dirname, 'cygnode_modules');
 function collectPatches(dir) {
