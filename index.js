@@ -53,8 +53,9 @@ Module.prototype.require = function (request) {
     }
     Object.defineProperty(moduleObject, '__CYGWIN__', {value: true});
 
+    const isCoreModule = moduleObject === moduleExports;
     Object.keys(patches)
-        .filter((key) => moduleObject.id.endsWith(key))
+        .filter(isCoreModule ? (key) => key === request : (key) => moduleObject.id.endsWith(key))
         .forEach((key) => patches[key](moduleObject));
 
     return moduleExports;
