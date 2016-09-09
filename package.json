@@ -1,0 +1,28 @@
+{
+  "name": "cygnode",
+  "version": "0.0.0",
+  "description": "Node.js for Cygwin.",
+  "keywords": [
+    "cygwin",
+    "nodejs"
+  ],
+  "homepage": "https://github.com/robario/cygnode/",
+  "bugs": {
+    "url": "https://github.com/robario/cygnode/issues"
+  },
+  "license": "ISC",
+  "author": "robario <webmaster@robario.com> (https://robario.com)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robario/cygnode.git"
+  },
+  "scripts": {
+    "build": "make node && strip node.exe",
+    "postinstall": "sh ./scripts/install.sh",
+    "postuninstall": "sh ./scripts/uninstall.sh"
+  },
+  "os": [
+    "win32"
+  ],
+  "preferGlobal": true
+}
