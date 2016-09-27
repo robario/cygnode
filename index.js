@@ -50,10 +50,10 @@ const moduleRequire = Module.prototype.require;
 Module.prototype.require = function (request) {
     const moduleExports = moduleRequire.apply(this, arguments);
     const moduleObject = findModuleByModuleExports(moduleExports);
-    if (moduleObject.__CYGWIN__) {
+    if (moduleObject['CYGWIN-PATCHED']) {
         return moduleExports;
     }
-    Object.defineProperty(moduleObject, '__CYGWIN__', {value: true});
+    Object.defineProperty(moduleObject, 'CYGWIN-PATCHED', {value: true});
 
     const isCoreModule = moduleObject === moduleExports;
     Object.keys(patches)
