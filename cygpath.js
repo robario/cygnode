@@ -5,12 +5,45 @@ const path = require('path');
 // local
 const debug = require('./debug.js');
 
+const OPTION_MAP = {
+    // Output type options:
+    d: 'dos',
+    m: 'mixed',
+    M: 'mode',
+    u: 'unix',
+    w: 'windows',
+    t: 'type',
+    // Path conversion options:
+    a: 'absolute',
+    l: 'long-name',
+    p: 'path',
+    U: 'proc-cygdrive',
+    s: 'short-name',
+    C: 'codepage',
+    // System information:
+    A: 'allusers',
+    D: 'desktop',
+    H: 'homeroot',
+    O: 'mydocs',
+    P: 'smprograms',
+    S: 'sysdir',
+    W: 'windir',
+    F: 'folder',
+    // Other options:
+    f: 'file',
+    o: 'option',
+    c: 'close',
+    i: 'ignore',
+    h: 'help',
+    V: 'version',
+};
+
 function cygpath(name, options) {
     const args = [];
     Object.keys(options || {})
         .forEach((key) => {
             if (options[key]) {
-                args.push((1 < key.length ? '--' : '-') + key);
+                args.push('--' + key);
                 if (options[key].constructor === String) {
                     args.push(options[key]);
                 }
@@ -27,68 +60,60 @@ function cygpath(name, options) {
     return converted;
 }
 
-module.exports = function (name, options) {
-    options = options || {};
-    let from = null;
-    if (options.relative) {
-        from = options.relative === true ? process.cwd() : options.relative;
-        delete options.relative;
-        options.absolute = true;
+module.exports = function (name, options, relative) {
+    if (name && !/[/\\]|^(?:[.]{1,2}|[a-z]:)$/i.test(name)) { // not a kind of path
+        return name;
     }
-
     // normalize options
-    if (2 <= ['dos', 'd', 'unix', 'u', 'windows', 'w', 'type', 't'].filter((key) => Boolean(options[key])).length) {
-        throw new Error('invalid type: ' + JSON.stringify(options));
+    options = options || {};
+    if ({}.hasOwnProperty.call(options, 'relative')) {
+        console.warn('Deprecated: Use 3rd argument instead');
+        relative = options.relative;
+        delete options.relative;
     }
-    if (options.t) {
-        options.type = options.t;
-        delete options.t;
-    }
-    ['dos', 'mixed', 'unix', 'windows'].forEach((type) => {
-        if (options.type === type || options[type] || options[type.charAt(0)]) {
-            delete options[type];
-            delete options[type.charAt(0)];
-            options.type = type;
+    Object.keys(options).forEach((option) => {
+        const longOption = OPTION_MAP[option];
+        if (longOption) {
+            if ({}.hasOwnProperty.call(options, longOption)) {
+                throw new Error('Conflict short option and long one');
+            }
+            options[longOption] = options[option];
+            delete options[option];
         }
     });
-    if (!options.type) {
-        options.type = 'unix';
-    }
-    let joinSep = null;
-    switch (options.type) {
-    case 'dos':
-        options.short = true;
-        joinSep = path.win32.sep;
-        break;
-    case 'mixed':
-        joinSep = path.posix.sep;
-        break;
-    case 'unix':
-        joinSep = path.posix.sep;
-        break;
-    case 'windows':
-        joinSep = path.win32.sep;
-        break;
-    default:
-        throw new Error('invalid type: ' + JSON.stringify(options));
-    }
-
-    let retval = cygpath(name, options);
-
-    if (from) {
-        from = cygpath(from, {
-            type: options.type,
-            absolute: true,
-        });
-        if (options.type === 'unix') {
-            retval = path.posix.relative(from, retval);
-        } else {
-            retval = path.win32.relative(from, retval)
-                .split(path.win32.sep)
-                .join(joinSep);
+    ['codepage', 'folder'].forEach((key) => {
+        if (options[key] && options[key].constructor === Number) {
+            options[key] = String(options[key]);
         }
-        retval = ['.', retval].join(joinSep);
+    });
+
+    // determin operation parameters for relative
+    let native = null;
+    if (relative) {
+        if (options.absolute) {
+            throw new Error('Conflict option relative and absolute');
+        }
+        if (relative.constructor !== String) {
+            relative = process.cwd();
+        }
+        native = (options.unix || options.type === 'unix') ? path.posix : path.win32;
     }
 
-    return retval;
+    // execute
+    let converted = cygpath(name, options);
+
+    // relative
+    if (relative && native.isAbsolute(converted)) {
+        // fixup from
+        const opts = Object.assign({}, options, {absolute: true});
+        'ADHOPSWFfocihV'.split('').forEach((key) => delete opts[OPTION_MAP[key]]);
+        relative = cygpath(relative, opts);
+        // convert to relative
+        converted = ['.', native.relative(relative, converted)].join(native.sep);
+        if (options.mixed || options.type === 'mixed') {
+            converted = converted.split(native.sep).join(path.posix.sep);
+        }
+    }
+
+    return converted;
 };
