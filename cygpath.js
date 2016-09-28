@@ -86,6 +86,9 @@ module.exports = function (name, options, relative) {
             options[key] = String(options[key]);
         }
     });
+    if (['dos', 'mixed', 'mode', 'unix', 'windows', 'type'].filter((type) => Boolean(options[type])).length === 0) {
+        options.type = 'unix';
+    }
 
     // determin operation parameters for relative
     let native = null;
