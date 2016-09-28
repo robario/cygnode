@@ -61,6 +61,9 @@ function cygpath(name, options) {
 }
 
 module.exports = function (name, options, relative) {
+    if (name && !/[/\\]|^(?:[.]{1,2}|[a-z]:)$/i.test(name)) { // not a kind of path
+        return name;
+    }
     // normalize options
     options = options || {};
     if ({}.hasOwnProperty.call(options, 'relative')) {
