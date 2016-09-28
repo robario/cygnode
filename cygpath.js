@@ -5,12 +5,45 @@ const path = require('path');
 // local
 const debug = require('./debug.js');
 
+const OPTION_MAP = {
+    // Output type options:
+    d: 'dos',
+    m: 'mixed',
+    M: 'mode',
+    u: 'unix',
+    w: 'windows',
+    t: 'type',
+    // Path conversion options:
+    a: 'absolute',
+    l: 'long-name',
+    p: 'path',
+    U: 'proc-cygdrive',
+    s: 'short-name',
+    C: 'codepage',
+    // System information:
+    A: 'allusers',
+    D: 'desktop',
+    H: 'homeroot',
+    O: 'mydocs',
+    P: 'smprograms',
+    S: 'sysdir',
+    W: 'windir',
+    F: 'folder',
+    // Other options:
+    f: 'file',
+    o: 'option',
+    c: 'close',
+    i: 'ignore',
+    h: 'help',
+    V: 'version',
+};
+
 function cygpath(name, options) {
     const args = [];
     Object.keys(options || {})
         .forEach((key) => {
             if (options[key]) {
-                args.push((1 < key.length ? '--' : '-') + key);
+                args.push('--' + key);
                 if (options[key].constructor === String) {
                     args.push(options[key]);
                 }
@@ -35,17 +68,27 @@ module.exports = function (name, options, relative) {
         relative = options.relative;
         delete options.relative;
     }
-    if (2 <= ['dos', 'd', 'unix', 'u', 'windows', 'w', 'type', 't'].filter((key) => Boolean(options[key])).length) {
+    Object.keys(options).forEach((option) => {
+        const longOption = OPTION_MAP[option];
+        if (longOption) {
+            if ({}.hasOwnProperty.call(options, longOption)) {
+                throw new Error('Conflict short option and long one');
+            }
+            options[longOption] = options[option];
+            delete options[option];
+        }
+    });
+    ['codepage', 'folder'].forEach((key) => {
+        if (options[key] && options[key].constructor === Number) {
+            options[key] = String(options[key]);
+        }
+    });
+    if (2 <= ['dos', 'mixed', 'mode', 'unix', 'windows', 'type'].filter((key) => Boolean(options[key])).length) {
         throw new Error('invalid type: ' + JSON.stringify(options));
     }
-    if (options.t) {
-        options.type = options.t;
-        delete options.t;
-    }
     ['dos', 'mixed', 'unix', 'windows'].forEach((type) => {
-        if (options.type === type || options[type] || options[type.charAt(0)]) {
+        if (options[type]) {
             delete options[type];
-            delete options[type.charAt(0)];
             options.type = type;
         }
     });
