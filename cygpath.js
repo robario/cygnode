@@ -27,16 +27,14 @@ function cygpath(name, options) {
     return converted;
 }
 
-module.exports = function (name, options) {
-    options = options || {};
-    let from = null;
-    if (options.relative) {
-        from = options.relative === true ? process.cwd() : options.relative;
-        delete options.relative;
-        options.absolute = true;
-    }
-
+module.exports = function (name, options, relative) {
     // normalize options
+    options = options || {};
+    if ({}.hasOwnProperty.call(options, 'relative')) {
+        console.warn('Deprecated: Use 3rd argument instead');
+        relative = options.relative;
+        delete options.relative;
+    }
     if (2 <= ['dos', 'd', 'unix', 'u', 'windows', 'w', 'type', 't'].filter((key) => Boolean(options[key])).length) {
         throw new Error('invalid type: ' + JSON.stringify(options));
     }
@@ -73,22 +71,29 @@ module.exports = function (name, options) {
         throw new Error('invalid type: ' + JSON.stringify(options));
     }
 
-    let retval = cygpath(name, options);
+    if (relative) {
+        if (relative.constructor !== String) {
+            relative = process.cwd();
+        }
+        options.absolute = true;
+    }
 
-    if (from) {
-        from = cygpath(from, {
+    let converted = cygpath(name, options);
+
+    if (relative) {
+        relative = cygpath(relative, {
             type: options.type,
             absolute: true,
         });
         if (options.type === 'unix') {
-            retval = path.posix.relative(from, retval);
+            converted = path.posix.relative(relative, converted);
         } else {
-            retval = path.win32.relative(from, retval)
+            converted = path.win32.relative(relative, converted)
                 .split(path.win32.sep)
                 .join(joinSep);
         }
-        retval = ['.', retval].join(joinSep);
+        converted = ['.', converted].join(joinSep);
     }
 
-    return retval;
+    return converted;
 };
