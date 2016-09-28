@@ -12,7 +12,7 @@ function cygpath(name, options) {
                 args.push(options[key]);
             }
         });
-    args.push(name);
+    args.push('--', name);
     return childProcess
         .execFileSync('cygpath', args, {encoding: 'utf8'})
         .replace(/(?:\r\n|\r|\n)$/, '');
