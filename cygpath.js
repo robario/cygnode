@@ -86,59 +86,33 @@ module.exports = function (name, options, relative) {
             options[key] = String(options[key]);
         }
     });
-    if (2 <= ['dos', 'mixed', 'mode', 'unix', 'windows', 'type'].filter((key) => Boolean(options[key])).length) {
-        throw new Error('invalid type: ' + JSON.stringify(options));
-    }
-    ['dos', 'mixed', 'unix', 'windows'].forEach((type) => {
-        if (options[type]) {
-            delete options[type];
-            options.type = type;
-        }
-    });
-    if (!options.type) {
-        options.type = 'unix';
-    }
-    let joinSep = null;
-    switch (options.type) {
-    case 'dos':
-        options.short = true;
-        joinSep = path.win32.sep;
-        break;
-    case 'mixed':
-        joinSep = path.posix.sep;
-        break;
-    case 'unix':
-        joinSep = path.posix.sep;
-        break;
-    case 'windows':
-        joinSep = path.win32.sep;
-        break;
-    default:
-        throw new Error('invalid type: ' + JSON.stringify(options));
-    }
 
+    // determin operation parameters for relative
+    let native = null;
     if (relative) {
+        if (options.absolute) {
+            throw new Error('Conflict option relative and absolute');
+        }
         if (relative.constructor !== String) {
             relative = process.cwd();
         }
-        options.absolute = true;
+        native = (options.unix || options.type === 'unix') ? path.posix : path.win32;
     }
 
+    // execute
     let converted = cygpath(name, options);
 
-    if (relative) {
-        relative = cygpath(relative, {
-            type: options.type,
-            absolute: true,
-        });
-        if (options.type === 'unix') {
-            converted = path.posix.relative(relative, converted);
-        } else {
-            converted = path.win32.relative(relative, converted)
-                .split(path.win32.sep)
-                .join(joinSep);
+    // relative
+    if (relative && native.isAbsolute(converted)) {
+        // fixup from
+        const opts = Object.assign({}, options, {absolute: true});
+        'ADHOPSWFfocihV'.split('').forEach((key) => delete opts[OPTION_MAP[key]]);
+        relative = cygpath(relative, opts);
+        // convert to relative
+        converted = ['.', native.relative(relative, converted)].join(native.sep);
+        if (options.mixed || options.type === 'mixed') {
+            converted = converted.split(native.sep).join(path.posix.sep);
         }
-        converted = ['.', converted].join(joinSep);
     }
 
     return converted;
