@@ -16,7 +16,9 @@ function cygpath(name, options) {
                 }
             }
         });
-    args.push('--', name);
+    if (name) {
+        args.push('--', name);
+    }
     debug('cygpath', args.join(' '));
     const converted = childProcess
           .execFileSync('cygpath', args, {encoding: 'utf8'})
