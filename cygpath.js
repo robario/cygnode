@@ -2,20 +2,29 @@
 // core
 const childProcess = require('child_process');
 const path = require('path');
+// local
+const debug = require('./debug.js');
 
 function cygpath(name, options) {
     const args = [];
     Object.keys(options || {})
         .forEach((key) => {
-            args.push((1 < key.length ? '--' : '-') + key);
-            if (options[key] && options[key].constructor === String) {
-                args.push(options[key]);
+            if (options[key]) {
+                args.push((1 < key.length ? '--' : '-') + key);
+                if (options[key].constructor === String) {
+                    args.push(options[key]);
+                }
             }
         });
-    args.push('--', name);
-    return childProcess
-        .execFileSync('cygpath', args, {encoding: 'utf8'})
-        .replace(/(?:\r\n|\r|\n)$/, '');
+    if (name) {
+        args.push('--', name);
+    }
+    debug('cygpath', args.join(' '));
+    const converted = childProcess
+          .execFileSync('cygpath', args, {encoding: 'utf8'})
+          .replace(/(?:\r\n|\r|\n)$/, '');
+    debug('converted:', converted);
+    return converted;
 }
 
 module.exports = function (name, options) {
