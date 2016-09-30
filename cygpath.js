@@ -52,11 +52,10 @@ function cygpath(name, options) {
     if (name) {
         args.push('--', name);
     }
-    debug('cygpath', args.join(' '));
     const converted = childProcess
           .execFileSync('cygpath', args, {encoding: 'utf8'})
           .replace(/(?:\r\n|\r|\n)$/, '');
-    debug('converted:', converted);
+    debug('cygpath', args.join(' '), '=>', converted);
     return converted;
 }
 
